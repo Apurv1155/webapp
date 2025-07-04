@@ -555,7 +555,10 @@
 
         async function setupCamera() {
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "user" }, // Force front camera
+        audio: false
+    });
                 VIDEO_ELEMENT.srcObject = stream;
                 VIDEO_ELEMENT.onloadedmetadata = () => {
                     VIDEO_ELEMENT.play();
