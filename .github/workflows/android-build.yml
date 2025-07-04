@@ -1,3 +1,4 @@
+
 name: Build APK
 
 on:
@@ -16,22 +17,18 @@ jobs:
       with:
         python-version: '3.10'
 
-    - name: Install system packages (with libtool & autotools)
+    - name: Install all required packages and dev tools
       run: |
         sudo apt-get update
-        sudo apt-get install -y \
-          git zip unzip openjdk-17-jdk pkg-config \
-          build-essential autoconf automake \
-          libtool libltdl-dev \
-          libffi-dev libssl-dev cmake \
-          python3-pip python3-setuptools python3-wheel python3-dev \
-          libgl1-mesa-dev libgles2-mesa-dev libsqlite3-dev
+        sudo apt-get install -y git zip unzip openjdk-17-jdk pkg-config           build-essential autoconf automake libtool libltdl-dev           libffi-dev libssl-dev cmake m4           python3-pip python3-setuptools python3-wheel python3-dev           libgl1-mesa-dev libgles2-mesa-dev libsqlite3-dev
 
-        # ✅ Fix autoreconf macros
+        # Fix for autoreconf macro errors
         libtoolize --install
 
-    - name: Install Buildozer
-      run: pip install --upgrade pip && pip install buildozer cython
+    - name: Install Buildozer and dependencies
+      run: |
+        pip install --upgrade pip
+        pip install buildozer cython
 
     - name: Install Android SDK and NDK
       run: |
@@ -41,18 +38,11 @@ jobs:
         unzip tools.zip -d $ANDROID_HOME/cmdline-tools
         mv $ANDROID_HOME/cmdline-tools/cmdline-tools $ANDROID_HOME/cmdline-tools/latest
 
-        yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
-          --sdk_root=$ANDROID_HOME \
-          "platform-tools" \
-          "platforms;android-33" \
-          "build-tools;33.0.2" \
-          "ndk;25.2.9519653"
+        yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager           --sdk_root=$ANDROID_HOME           "platform-tools"           "platforms;android-33"           "build-tools;33.0.2"           "ndk;25.2.9519653"
 
-    - name: Fix Buildozer legacy paths
+    - name: Fix Buildozer paths and environment
       run: |
         export ANDROID_HOME=$HOME/.buildozer/android/platform/android-sdk
-
-        # Symlink for Buildozer compatibility
         mkdir -p $ANDROID_HOME/tools/bin
         ln -sf $ANDROID_HOME/cmdline-tools/latest/bin/* $ANDROID_HOME/tools/bin/
 
