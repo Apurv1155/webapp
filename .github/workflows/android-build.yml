@@ -18,45 +18,43 @@ jobs:
 
     - name: Install system dependencies
       run: |
-        sudo apt update
-        sudo apt install -y git zip unzip openjdk-17-jdk pkg-config \
-                            libgl1-mesa-dev libgles2-mesa-dev python3-pip \
-                            python3-setuptools python3-wheel python3-dev \
-                            build-essential libffi-dev libssl-dev
+        sudo apt-get update
+        sudo apt-get install -y git zip unzip openjdk-17-jdk pkg-config \
+          libgl1-mesa-dev libgles2-mesa-dev python3-pip \
+          python3-setuptools python3-wheel python3-dev \
+          build-essential libffi-dev libssl-dev \
+          autoconf automake libtool  # ✅ Fixes autoreconf build errors
 
-    - name: Install Buildozer
-      run: pip install buildozer cython
+    - name: Install Buildozer & Cython
+      run: pip install --upgrade pip && pip install buildozer cython
 
-    - name: Install Android SDK & Build Tools (with aidl)
+    - name: Download & Install Android SDK + NDK
       run: |
-        export ANDROID_SDK_ROOT=$HOME/.buildozer/android/platform/android-sdk
-        mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
+        export SDK_ROOT=$HOME/.buildozer/android/platform/android-sdk
+        mkdir -p $SDK_ROOT/cmdline-tools
         wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O tools.zip
-        unzip tools.zip -d $ANDROID_SDK_ROOT/cmdline-tools
-        mv $ANDROID_SDK_ROOT/cmdline-tools/cmdline-tools $ANDROID_SDK_ROOT/cmdline-tools/latest
+        unzip tools.zip -d $SDK_ROOT/cmdline-tools
+        mv $SDK_ROOT/cmdline-tools/cmdline-tools $SDK_ROOT/cmdline-tools/latest
 
-        # Install SDK components
-        yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager \
-          --sdk_root=$ANDROID_SDK_ROOT \
+        yes | $SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=$SDK_ROOT \
           "platform-tools" \
           "platforms;android-33" \
           "build-tools;33.0.2" \
           "ndk;25.2.9519653"
 
-    - name: Fix sdkmanager and aidl paths
+    - name: Fix paths for Buildozer compatibility
       run: |
-        export ANDROID_SDK_ROOT=$HOME/.buildozer/android/platform/android-sdk
+        export SDK_ROOT=$HOME/.buildozer/android/platform/android-sdk
 
-        # Symlink sdkmanager to old-style path Buildozer expects
-        mkdir -p $ANDROID_SDK_ROOT/tools/bin
-        ln -s $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/* $ANDROID_SDK_ROOT/tools/bin/
+        # Symlink for sdkmanager (expected at tools/bin/)
+        mkdir -p $SDK_ROOT/tools/bin
+        ln -sf $SDK_ROOT/cmdline-tools/latest/bin/* $SDK_ROOT/tools/bin/
 
-        # Ensure build-tools path is visible and aidl is executable
-        chmod +x $ANDROID_SDK_ROOT/build-tools/33.0.2/aidl || true
-        echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
-        echo "$ANDROID_SDK_ROOT/build-tools/33.0.2" >> $GITHUB_PATH
-        echo "$ANDROID_SDK_ROOT/platform-tools" >> $GITHUB_PATH
-        echo "$ANDROID_SDK_ROOT/tools/bin" >> $GITHUB_PATH
+        # Add to environment
+        echo "ANDROID_SDK_ROOT=$SDK_ROOT" >> $GITHUB_ENV
+        echo "$SDK_ROOT/build-tools/33.0.2" >> $GITHUB_PATH
+        echo "$SDK_ROOT/platform-tools" >> $GITHUB_PATH
+        echo "$SDK_ROOT/tools/bin" >> $GITHUB_PATH
 
     - name: Build APK
       run: buildozer android debug
