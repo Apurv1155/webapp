@@ -2,6 +2,8 @@
 title = FaceApp
 package.name = faceapp
 package.domain = org.archtech
+source.dir = .                  # ✅ Add this line — use current directory as source
+version = 1.0.0                 # ✅ Add this line — set your app version
 source.include_exts = py,png,jpg,kv,atlas,html,mp3,json,xml
 source.include_patterns = assets/*,templates/*
 requirements = python3,flask,flask_cors,opencv-python,numpy,requests,android
